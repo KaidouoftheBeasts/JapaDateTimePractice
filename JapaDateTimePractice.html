@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fecha y Hora en Japonés</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { background-color: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); padding: 30px; max-width: 700px; width: 100%; text-align: center; }
+        h1 { color: #333; margin-bottom: 20px; font-size: 28px; }
+        .current-time { font-size: 18px; color: #666; margin-bottom: 30px; }
+        .buttons-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+        .option-button { background-color: #4a6fa5; color: white; border: none; border-radius: 10px; padding: 12px 20px; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(74, 111, 165, 0.3); flex: 1; min-width: 120px; max-width: 200px; }
+        .option-button:hover { background-color: #3a5a80; transform: translateY(-2px); box-shadow: 0 6px 8px rgba(74, 111, 165, 0.4); }
+        .option-button:active { transform: translateY(0); }
+        .option-button.active { background-color: #2a4a70; box-shadow: 0 2px 4px rgba(74, 111, 165, 0.5); }
+        .display-area { background-color: #f8f9fa; border-radius: 10px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #4a6fa5; }
+        .writing-system { margin-bottom: 20px; }
+        .writing-system:last-child { margin-bottom: 0; }
+        .system-name { font-weight: bold; color: #4a6fa5; margin-bottom: 5px; font-size: 16px; }
+        .japanese-text { font-size: 20px; color: #333; min-height: 30px; padding: 8px; background-color: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); line-height: 1.5; }
+        .kanji { font-family: 'MS Mincho', 'SimSong', serif; font-size: 22px; }
+        .hiragana { font-family: 'MS Gothic', 'SimHei', sans-serif; }
+        .speak-button { background-color: #4a6fa5; color: white; border: none; border-radius: 50px; padding: 15px 30px; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(74, 111, 165, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .speak-button:hover { background-color: #3a5a80; transform: translateY(-2px); box-shadow: 0 6px 8px rgba(74, 111, 165, 0.4); }
+        .speak-button:active { transform: translateY(0); }
+        .speak-button:disabled { background-color: #cccccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .button-icon { margin-right: 10px; font-size: 20px; }
+        .loading { display: none; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #4a6fa5; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .voice-selector { margin: 15px 0; padding: 10px; background-color: #f0f8ff; border-radius: 5px; }
+        .voice-selector select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 100%; max-width: 300px; }
+        .status { margin: 10px 0; padding: 8px; border-radius: 5px; font-size: 14px; }
+        .status.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .footer { margin-top: 20px; color: #888; font-size: 14px; }
+        @media (max-width: 480px) {
+            .container { padding: 20px; }
+            h1 { font-size: 24px; }
+            .buttons-container { flex-direction: column; align-items: center; }
+            .option-button { max-width: 100%; }
+            .japanese-text, .kanji { font-size: 18px; }
+            .speak-button { padding: 12px 25px; font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fecha y Hora en Japonés</h1>
+        <div class="current-time" id="currentTime">Cargando...</div>
+        
+        <div class="buttons-container">
+            <button class="option-button active" id="datetimeButton">Fecha y Hora</button>
+            <button class="option-button" id="dateButton">Solo Fecha</button>
+            <button class="option-button" id="timeButton">Solo Hora</button>
+        </div>
+        
+        <div class="display-area" id="displayArea">
+            <div class="writing-system">
+                <div class="system-name">Romaji (Alfabeto latino)</div>
+                <div class="japanese-text" id="romajiDisplay">-</div>
+            </div>
+            <div class="writing-system">
+                <div class="system-name">Kanji (Caracteres chinos)</div>
+                <div class="japanese-text kanji" id="kanjiDisplay">-</div>
+            </div>
+            <div class="writing-system">
+                <div class="system-name">Hiragana (Silabario japonés)</div>
+                <div class="japanese-text hiragana" id="hiraganaDisplay">-</div>
+            </div>
+        </div>
+        
+        <div class="voice-selector" id="voiceSelector">
+            <label for="voiceSelect">Seleccionar voz japonesa:</label>
+            <select id="voiceSelect"><option value="">Buscando voces japonesas...</option></select>
+        </div>
+        
+        <div id="voiceStatus" class="status warning">Cargando voces disponibles...</div>
+        
+        <button class="speak-button" id="speakButton" disabled>
+            <div class="loading" id="loadingSpinner"></div>
+            <span class="button-icon">🗣️</span> 
+            <span id="buttonText">Esperando voces...</span>
+        </button>
+        
+        <div class="footer">Actualizado a agosto de 2025 - Minutos completamente corregidos</div>
+    </div>
+
+    <script>
+        // Variables globales
+        let voices = [], japaneseVoices = [], voicesLoaded = false, currentMode = 'datetime';
+
+        // Datos optimizados
+        const specialDays = {
+            1: { kanji: "一日", hiragana: "ついたち", romaji: "tsuitachi" },
+            2: { kanji: "二日", hiragana: "ふつか", romaji: "futsuka" },
+            3: { kanji: "三日", hiragana: "みっか", romaji: "mikka" },
+            4: { kanji: "四日", hiragana: "よっか", romaji: "yokka" },
+            5: { kanji: "五日", hiragana: "いつか", romaji: "itsuka" },
+            6: { kanji: "六日", hiragana: "むいか", romaji: "muika" },
+            7: { kanji: "七日", hiragana: "なのか", romaji: "nanoka" },
+            8: { kanji: "八日", hiragana: "ようか", romaji: "yōka" },
+            9: { kanji: "九日", hiragana: "ここのか", romaji: "kokonoka" },
+            10: { kanji: "十日", hiragana: "とおか", romaji: "tōka" },
+            14: { kanji: "十四日", hiragana: "じゅうよっか", romaji: "jū yokka" },
+            20: { kanji: "二十日", hiragana: "はつか", romaji: "hatsuka" },
+            24: { kanji: "二十四日", hiragana: "にじゅうよっか", romaji: "nijū yokka" }
+        };
+
+        const amPm = { 
+            am: { kanji: "午前", hiragana: "ごぜん", romaji: "gozen" }, 
+            pm: { kanji: "午後", hiragana: "ごご", romaji: "gogo" } 
+        };
+        
+        const numbers = {
+            0: { kanji: "〇", hiragana: "れい", romaji: "rei" }, 
+            1: { kanji: "一", hiragana: "いち", romaji: "ichi" },
+            2: { kanji: "二", hiragana: "に", romaji: "ni" }, 
+            3: { kanji: "三", hiragana: "さん", romaji: "san" },
+            4: { kanji: "四", hiragana: "よん", romaji: "yon" }, 
+            5: { kanji: "五", hiragana: "ご", romaji: "go" },
+            6: { kanji: "六", hiragana: "ろく", romaji: "roku" }, 
+            7: { kanji: "七", hiragana: "なな", romaji: "nana" },
+            8: { kanji: "八", hiragana: "はち", romaji: "hachi" }, 
+            9: { kanji: "九", hiragana: "きゅう", romaji: "kyū" },
+            10: { kanji: "十", hiragana: "じゅう", romaji: "jū" }
+        };
+
+        const months = {
+            1: { kanji: "一月", hiragana: "いちがつ", romaji: "ichigatsu" }, 
+            2: { kanji: "二月", hiragana: "にがつ", romaji: "nigatsu" },
+            3: { kanji: "三月", hiragana: "さんがつ", romaji: "sangatsu" }, 
+            4: { kanji: "四月", hiragana: "しがつ", romaji: "shigatsu" },
+            5: { kanji: "五月", hiragana: "ごがつ", romaji: "gogatsu" }, 
+            6: { kanji: "六月", hiragana: "ろくがつ", romaji: "rokugatsu" },
+            7: { kanji: "七月", hiragana: "しちがつ", romaji: "shichigatsu" }, 
+            8: { kanji: "八月", hiragana: "はちがつ", romaji: "hachigatsu" },
+            9: { kanji: "九月", hiragana: "くがつ", romaji: "kugatsu" }, 
+            10: { kanji: "十月", hiragana: "じゅうがつ", romaji: "jūgatsu" },
+            11: { kanji: "十一月", hiragana: "じゅういちがつ", romaji: "jūichigatsu" }, 
+            12: { kanji: "十二月", hiragana: "じゅうにがつ", romaji: "jūnigatsu" }
+        };
+
+        const weekdays = [
+            { kanji: "日曜日", hiragana: "にちようび", romaji: "nichiyōbi" }, 
+            { kanji: "月曜日", hiragana: "げつようび", romaji: "getsuyōbi" },
+            { kanji: "火曜日", hiragana: "かようび", romaji: "kayōbi" }, 
+            { kanji: "水曜日", hiragana: "すいようび", romaji: "suiyōbi" },
+            { kanji: "木曜日", hiragana: "もくようび", romaji: "mokuyōbi" }, 
+            { kanji: "金曜日", hiragana: "きんようび", romaji: "kin'yōbi" },
+            { kanji: "土曜日", hiragana: "どようび", romaji: "doyōbi" }
+        ];
+
+        // Función corregida para días del mes
+        const getDayPronunciation = (day) => {
+            if (specialDays[day]) return specialDays[day];
+            
+            if (day <= 10) {
+                return {
+                    kanji: numbers[day].kanji + "日",
+                    hiragana: numbers[day].hiragana + "にち",
+                    romaji: numbers[day].romaji + " nichi"
+                };
+            }
+            
+            const tens = Math.floor(day / 10);
+            const ones = day % 10;
+            
+            if (ones === 0) {
+                return {
+                    kanji: numbers[tens].kanji + "十日",
+                    hiragana: numbers[tens].hiragana + "じゅうにち",
+                    romaji: numbers[tens].romaji + "jū nichi"
+                };
+            } else {
+                return {
+                    kanji: numbers[tens].kanji + "十" + numbers[ones].kanji + "日",
+                    hiragana: numbers[tens].hiragana + "じゅう" + numbers[ones].hiragana + "にち",
+                    romaji: numbers[tens].romaji + "jū" + numbers[ones].romaji + " nichi"
+                };
+            }
+        };
+
+        // Función COMPLETAMENTE CORREGIDA para minutos
+        const getMinutePronunciation = (minutes) => {
+            if (minutes === 0) return { romaji: "", hiragana: "", kanji: "" };
+            
+            // CASOS ESPECIALES ÚNICOS
+            if (minutes === 1) return { romaji: "ippun", hiragana: "いっぷん", kanji: "一分" };
+            if (minutes === 6) return { romaji: "roppun", hiragana: "ろっぷん", kanji: "六分" };
+            if (minutes === 8) return { romaji: "happun", hiragana: "はっぷん", kanji: "八分" };
+            if (minutes === 10) return { romaji: "juppun", hiragana: "じゅっぷん", kanji: "十分" };
+            
+            // DECENAS ESPECIALES
+            if (minutes === 20) return { romaji: "nijuppun", hiragana: "にじゅっぷん", kanji: "二十分" };
+            if (minutes === 30) return { romaji: "sanjuppun", hiragana: "さんじゅっぷん", kanji: "三十分" };
+            if (minutes === 40) return { romaji: "yonjuppun", hiragana: "よんじゅっぷん", kanji: "四十分" };
+            if (minutes === 50) return { romaji: "gojuppun", hiragana: "ごじゅっぷん", kanji: "五十分" };
+            
+            // Para números simples (2-9)
+            if (minutes < 10) {
+                const isSpecial = [1, 3, 4, 6, 8].includes(minutes);
+                const pronunciation = isSpecial ? "pun" : "fun";
+                const hiraganaEnd = isSpecial ? "ぷん" : "ふん";
+                
+                return {
+                    romaji: numbers[minutes].romaji + pronunciation,
+                    hiragana: numbers[minutes].hiragana + hiraganaEnd,
+                    kanji: numbers[minutes].kanji + "分"
+                };
+            }
+            
+            // Para números de 11-59 (excluyendo los casos especiales ya tratados)
+            const tens = Math.floor(minutes / 10);
+            const ones = minutes % 10;
+            
+            // CORRECCIÓN CRÍTICA: Aplicar pronunciación especial para 1, 6, 8 en las unidades
+            if (ones === 0) {
+                // Para números como 20, 30, 40, 50 ya están definidos arriba
+                return {
+                    romaji: (tens === 1 ? "jū" : numbers[tens].romaji + "jū") + "fun",
+                    hiragana: numbers[tens].hiragana + "じゅうふん",
+                    kanji: numbers[tens].kanji + "十分"
+                };
+            } else {
+                // DETERMINAR PRONUNCIACIÓN CORRECTA SEGÚN EL ÚLTIMO DÍGITO
+                let onesPronunciation;
+                let onesHiragana;
+                
+                switch(ones) {
+                    case 1:
+                        onesPronunciation = "ippun"; // NO "ichipun"
+                        onesHiragana = "いっぷん";
+                        break;
+                    case 3:
+                        onesPronunciation = "sanpun";
+                        onesHiragana = "さんぷん";
+                        break;
+                    case 4:
+                        onesPronunciation = "yonpun";
+                        onesHiragana = "よんぷん";
+                        break;
+                    case 6:
+                        onesPronunciation = "roppun"; // NO "rokupun"
+                        onesHiragana = "ろっぷん";
+                        break;
+                    case 8:
+                        onesPronunciation = "happun"; // NO "hachipun"
+                        onesHiragana = "はっぷん";
+                        break;
+                    default:
+                        // Para 2, 5, 7, 9
+                        onesPronunciation = numbers[ones].romaji + "fun";
+                        onesHiragana = numbers[ones].hiragana + "ふん";
+                }
+                
+                const tensPart = tens === 1 ? "jū" : numbers[tens].romaji + "jū";
+                const tensHiragana = numbers[tens].hiragana + "じゅう";
+                
+                return {
+                    romaji: tensPart + onesPronunciation,
+                    hiragana: tensHiragana + onesHiragana,
+                    kanji: numbers[tens].kanji + "十" + numbers[ones].kanji + "分"
+                };
+            }
+        };
+
+        const convertNumberToJapanese = (num, type = 'general') => {
+            if (type === 'day') return getDayPronunciation(num);
+            if (type === 'minutes') return getMinutePronunciation(num);
+            
+            if (type === 'hours') {
+                let hour = num > 12 ? num - 12 : (num === 0 ? 12 : num);
+                if (hour === 4) return { kanji: "四", hiragana: "よ", romaji: "yo" };
+                if (hour === 7) return { kanji: "七", hiragana: "しち", romaji: "shichi" };
+                if (hour === 9) return { kanji: "九", hiragana: "く", romaji: "ku" };
+                return numbers[hour] || { kanji: hour.toString(), hiragana: hour.toString(), romaji: hour.toString() };
+            }
+            
+            if (num <= 10) return numbers[num];
+            
+            if (num < 100) {
+                const tens = Math.floor(num / 10), ones = num % 10;
+                return {
+                    kanji: numbers[tens].kanji + "十" + (ones ? numbers[ones].kanji : ""),
+                    hiragana: numbers[tens].hiragana + "じゅう" + (ones ? numbers[ones].hiragana : ""),
+                    romaji: numbers[tens].romaji + "jū" + (ones ? numbers[ones].romaji : "")
+                };
+            }
+            
+            if (type === 'year') {
+                if (num === 2025) return { kanji: "二千二十五", hiragana: "にせんにじゅうご", romaji: "nisen nijūgo" };
+                const yearStr = num.toString();
+                return { 
+                    kanji: yearStr.split('').map(d => numbers[d]?.kanji || d).join(''),
+                    hiragana: yearStr.split('').map(d => numbers[d]?.hiragana || d).join(''),
+                    romaji: yearStr.split('').map(d => numbers[d]?.romaji || d).join('')
+                };
+            }
+            
+            return { kanji: num.toString(), hiragana: num.toString(), romaji: num.toString() };
+        };
+
+        const formatJapaneseDateTime = (date, mode) => {
+            const year = date.getFullYear(), month = date.getMonth() + 1, day = date.getDate();
+            const weekday = date.getDay(), hours = date.getHours(), minutes = date.getMinutes();
+            
+            const period = hours >= 12 ? amPm.pm : amPm.am;
+            const displayHours = hours === 0 ? 12 : (hours > 12 ? hours - 12 : hours);
+            
+            const yearJ = convertNumberToJapanese(year, 'year');
+            const monthJ = months[month];
+            const dayJ = convertNumberToJapanese(day, 'day');
+            const hoursJ = convertNumberToJapanese(displayHours, 'hours');
+            const minutesJ = convertNumberToJapanese(minutes, 'minutes');
+            const weekdayJ = weekdays[weekday];
+            
+            let romaji = "", kanji = "", hiragana = "", speechText = "";
+            
+            switch(mode) {
+                case 'datetime':
+                    romaji = `${yearJ.romaji}nen ${monthJ.romaji} ${dayJ.romaji} (${weekdayJ.romaji}) ${period.romaji} ${hoursJ.romaji}ji ${minutesJ.romaji}`;
+                    kanji = `${yearJ.kanji}年${monthJ.kanji}${dayJ.kanji}（${weekdayJ.kanji}）${period.kanji}${hoursJ.kanji}時${minutesJ.kanji}`;
+                    hiragana = `${yearJ.hiragana}ねん ${monthJ.hiragana} ${dayJ.hiragana}（${weekdayJ.hiragana}）${period.hiragana}${hoursJ.hiragana}じ${minutesJ.hiragana}`;
+                    speechText = `${yearJ.romaji}ねん ${monthJ.romaji} ${dayJ.romaji}、${weekdayJ.romaji}、${period.romaji} ${hoursJ.romaji}じ${minutes > 0 ? ` ${minutesJ.romaji}` : ''}`;
+                    break;
+                case 'date':
+                    romaji = `${yearJ.romaji}nen ${monthJ.romaji} ${dayJ.romaji} (${weekdayJ.romaji})`;
+                    kanji = `${yearJ.kanji}年${monthJ.kanji}${dayJ.kanji}（${weekdayJ.kanji}）`;
+                    hiragana = `${yearJ.hiragana}ねん ${monthJ.hiragana} ${dayJ.hiragana}（${weekdayJ.hiragana}）`;
+                    speechText = `${yearJ.romaji}ねん ${monthJ.romaji} ${dayJ.romaji}、${weekdayJ.romaji}`;
+                    break;
+                case 'time':
+                    romaji = `${period.romaji} ${hoursJ.romaji}ji ${minutesJ.romaji}`;
+                    kanji = `${period.kanji}${hoursJ.kanji}時${minutesJ.kanji}`;
+                    hiragana = `${period.hiragana}${hoursJ.hiragana}じ${minutesJ.hiragana}`;
+                    speechText = `${period.romaji} ${hoursJ.romaji}じ${minutes > 0 ? ` ${minutesJ.romaji}` : ''}`;
+                    break;
+            }
+            
+            return { romaji, kanji, hiragana, speechText };
+        };
+
+        const updateDisplay = (mode = 'datetime') => {
+            const currentDateTime = new Date();
+            const japaneseDateTime = formatJapaneseDateTime(currentDateTime, mode);
+            
+            document.getElementById('currentTime').textContent = 
+                currentDateTime.toLocaleDateString('es-ES', { 
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true 
+                });
+            
+            document.getElementById('romajiDisplay').textContent = japaneseDateTime.romaji;
+            document.getElementById('kanjiDisplay').textContent = japaneseDateTime.kanji;
+            document.getElementById('hiraganaDisplay').textContent = japaneseDateTime.hiragana;
+            
+            currentMode = mode;
+            
+            document.querySelectorAll('.option-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(mode + 'Button').classList.add('active');
+        };
+
+        const loadVoices = () => {
+            voices = speechSynthesis.getVoices();
+            japaneseVoices = voices.filter(voice => 
+                voice.lang.startsWith('ja') || voice.lang.includes('JP') || 
+                voice.name.toLowerCase().includes('japan') || voice.name.toLowerCase().includes('japanese')
+            );
+            
+            const voiceSelect = document.getElementById('voiceSelect');
+            const voiceStatus = document.getElementById('voiceStatus');
+            const speakButton = document.getElementById('speakButton');
+            const buttonText = document.getElementById('buttonText');
+            
+            voiceSelect.innerHTML = '';
+            
+            if (japaneseVoices.length > 0) {
+                japaneseVoices.forEach((voice, i) => {
+                    voiceSelect.innerHTML += `<option value="${i}">${voice.name} (${voice.lang})</option>`;
+                });
+                
+                voiceStatus.textContent = `✓ ${japaneseVoices.length} voces japonesas encontradas`;
+                voiceStatus.className = 'status success';
+                speakButton.disabled = false;
+                buttonText.textContent = 'Decir en japonés';
+                voicesLoaded = true;
+            } else {
+                voiceSelect.innerHTML = '<option value="">No se encontraron voces japonesas</option>';
+                voiceStatus.textContent = '✗ No hay voces japonesas. Se usará voz por defecto.';
+                voiceStatus.className = 'status warning';
+                speakButton.disabled = false;
+                buttonText.textContent = 'Decir en japonés (voz por defecto)';
+                voicesLoaded = false;
+            }
+        };
+
+        const speakJapaneseDateTime = () => {
+            if (!currentMode) return;
+            
+            const currentDateTime = new Date();
+            const japaneseDateTime = formatJapaneseDateTime(currentDateTime, currentMode);
+            const button = document.getElementById('speakButton');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            button.disabled = true;
+            loadingSpinner.style.display = 'block';
+            buttonText.textContent = 'Hablando...';
+            
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(japaneseDateTime.speechText);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.8;
+            
+            if (voicesLoaded) {
+                const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
+                if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
+                    utterance.voice = japaneseVoices[selectedIndex];
+                }
+            }
+            
+            utterance.onend = () => {
+                button.disabled = false;
+                loadingSpinner.style.display = 'none';
+                buttonText.textContent = voicesLoaded ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
+            };
+            
+            utterance.onerror = (event) => {
+                console.error('Error en speech synthesis:', event);
+                button.disabled = false;
+                loadingSpinner.style.display = 'none';
+                buttonText.textContent = voicesLoaded ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
+            };
+            
+            setTimeout(() => speechSynthesis.speak(utterance), 100);
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+            
+            document.getElementById('datetimeButton').addEventListener('click', () => updateDisplay('datetime'));
+            document.getElementById('dateButton').addEventListener('click', () => updateDisplay('date'));
+            document.getElementById('timeButton').addEventListener('click', () => updateDisplay('time'));
+            
+            document.getElementById('speakButton').addEventListener('click', speakJapaneseDateTime);
+            
+            updateDisplay('datetime');
+            setInterval(() => updateDisplay(currentMode), 60000);
+        });
+    </script>
+</body>
+</html>
