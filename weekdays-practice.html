@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Práctica de Días de la Semana en Japonés</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Práctica de Días de la Semana en Japonés</h1>
+        
+        <!-- Pestañas de navegación -->
+        <div class="tabs">
+            <button class="tab-button" onclick="location.href='index.html'">Fecha y Hora</button>
+            <button class="tab-button" onclick="location.href='hours-practice.html'">Práctica de Horas</button>
+            <button class="tab-button" onclick="location.href='days-practice.html'">Días del Mes</button>
+            <button class="tab-button active" onclick="location.href='weekdays-practice.html'">Días de la Semana</button>
+        </div>
+        
+        <div class="practice-controls">
+            <div class="input-mode">
+                <label>Modo de respuesta:</label>
+                <div class="radio-group">
+                    <input type="radio" id="inputRomaji" name="inputMode" value="romaji" checked>
+                    <label for="inputRomaji">Romaji</label>
+                    
+                    <input type="radio" id="inputHiragana" name="inputMode" value="hiragana">
+                    <label for="inputHiragana">Hiragana</label>
+                    
+                    <input type="radio" id="inputKanji" name="inputMode" value="kanji">
+                    <label for="inputKanji">Kanji</label>
+                </div>
+            </div>
+            
+            <button id="generateDay" class="practice-button">Generar Nuevo Día</button>
+        </div>
+        
+        <div class="practice-area">
+            <div class="day-display">
+                <div id="dayToPractice" class="day-text">---</div>
+                <div id="dayEnglish" class="day-english"></div>
+            </div>
+            
+            <div class="user-input-area">
+                <label for="userAnswer" id="inputLabel">Escribe el día en Romaji:</label>
+                <div class="input-container">
+                    <input type="text" id="userAnswer" placeholder="Ej: getsuyōbi" autocomplete="off">
+                    <button id="checkAnswer" class="check-button">Verificar</button>
+                </div>
+                <div class="input-hint" id="inputHint">Escribe el nombre del día de la semana</div>
+            </div>
+            
+            <div class="answer-feedback">
+                <div id="feedback" class="feedback"></div>
+            </div>
+            
+            <div class="answer-area" style="display: none;">
+                <div class="writing-system" id="romajiAnswer">
+                    <div class="system-name">Romaji</div>
+                    <div class="japanese-text">-</div>
+                </div>
+                
+                <div class="writing-system" id="kanjiAnswer">
+                    <div class="system-name">Kanji</div>
+                    <div class="japanese-text kanji">-</div>
+                </div>
+                
+                <div class="writing-system" id="hiraganaAnswer">
+                    <div class="system-name">Hiragana</div>
+                    <div class="japanese-text hiragana">-</div>
+                </div>
+            </div>
+            
+            <div class="practice-buttons">
+                <button id="showAnswer" class="practice-button secondary">Mostrar Respuesta</button>
+                <button id="nextQuestion" class="practice-button">Siguiente Pregunta</button>
+            </div>
+            
+            <div class="voice-controls">
+                <div class="voice-selector">
+                    <label for="voiceSelect">Seleccionar voz japonesa:</label>
+                    <select id="voiceSelect">
+                        <option value="">Buscando voces japonesas...</option>
+                    </select>
+                </div>
+                
+                <button id="speakButton" class="speak-button" disabled>
+                    <div class="loading" id="loadingSpinner"></div>
+                    <span class="button-icon">🗣️</span> 
+                    <span id="buttonText">Escuchar pronunciación</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Preguntas:</span>
+                <span id="questionsCount" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Aciertos:</span>
+                <span id="correctCount" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Precisión:</span>
+                <span id="accuracyRate" class="stat-value">0%</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Racha actual:</span>
+                <span id="streakCount" class="stat-value">0</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="weekdays-practice.js"></script>
+</body>
+</html>
