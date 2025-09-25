@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fecha y Hora en Japonés</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Fecha y Hora en Japonés</h1>
+        
+        <!-- Pestañas de navegación -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="location.href='index.html'">Fecha y Hora</button>
+            <button class="tab-button" onclick="location.href='hours-practice.html'">Práctica de Horas</button>
+            <button class="tab-button" onclick="location.href='days-practice.html'">Días del Mes</button>
+            <button class="tab-button" onclick="location.href='weekdays-practice.html'">Días de la Semana</button>
+        </div>
+        
+        <div class="current-time" id="currentTime">Cargando...</div>
+        
+        <div class="buttons-container">
+            <button class="option-button active" id="datetimeButton">Fecha y Hora</button>
+            <button class="option-button" id="dateButton">Solo Fecha</button>
+            <button class="option-button" id="timeButton">Solo Hora</button>
+        </div>
+        
+        <div class="display-area" id="displayArea">
+            <div class="writing-system">
+                <div class="system-name">Kanji (Caracteres chinos)</div>
+                <div class="japanese-text kanji" id="kanjiDisplay">-</div>
+            </div>
+            <div class="writing-system">
+                <div class="system-name">Hiragana (Silabario japonés)</div>
+                <div class="japanese-text hiragana" id="hiraganaDisplay">-</div>
+            </div>
+            <div class="writing-system">
+                <div class="system-name">Romaji (Alfabeto latino)</div>
+                <div class="japanese-text" id="romajiDisplay">-</div>
+            </div>
+        </div>
+        
+        <div class="voice-selector" id="voiceSelector">
+            <label for="voiceSelect">Seleccionar voz japonesa:</label>
+            <select id="voiceSelect"><option value="">Buscando voces japonesas...</option></select>
+        </div>
+        
+        <div id="voiceStatus" class="status warning">Cargando voces disponibles...</div>
+        
+        <button class="speak-button" id="speakButton" disabled>
+            <div class="loading" id="loadingSpinner"></div>
+            <span class="button-icon">🗣️</span> 
+            <span id="buttonText">Esperando voces...</span>
+        </button>
+        
+        <div class="footer">Actualizado a septiembre de 2025</div>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+    <script src="tts-client.js"></script>
+</body>
+</html>

@@ -268,44 +268,36 @@ const loadVoices = () => {
 };
 
 // Reproducir la fecha en japonés
-const speakJapaneseDate = () => {
-    if (!currentJapaneseDate) return;
+const speakJapaneseDate = async () => {
+    if (!currentMode) return;
     
+    const currentDateTime = new Date();
+    const japaneseDateTime = formatJapaneseDateTime(currentDateTime, currentMode);
     const button = document.getElementById('speakButton');
     const buttonText = document.getElementById('buttonText');
     const loadingSpinner = document.getElementById('loadingSpinner');
     
     button.disabled = true;
     loadingSpinner.style.display = 'block';
-    buttonText.textContent = 'Reproduciendo...';
+    buttonText.textContent = 'Generando audio...';
     
-    speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(currentJapaneseDate.speechText);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 0.8;
-    
-    if (voicesLoaded) {
-        const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
-        if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
-            utterance.voice = japaneseVoices[selectedIndex];
-        }
+    try {
+        await window.ttsClient.speak(japaneseDateTime.speechText, {
+            voice: 'japanese',
+            speed: 160,
+            pitch: 50
+        });
+        buttonText.textContent = 'Audio completado ✓';
+    } catch (error) {
+        console.error('Error al generar audio:', error);
+        buttonText.textContent = 'Error en audio ❌';
+    } finally {
+        setTimeout(() => {
+            button.disabled = false;
+            loadingSpinner.style.display = 'none';
+            buttonText.textContent = 'Decir en japonés';
+        }, 1000);
     }
-    
-    utterance.onend = () => {
-        button.disabled = false;
-        loadingSpinner.style.display = 'none';
-        buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-    };
-    
-    utterance.onerror = (event) => {
-        console.error('Error en speech synthesis:', event);
-        button.disabled = false;
-        loadingSpinner.style.display = 'none';
-        buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-    };
-    
-    setTimeout(() => speechSynthesis.speak(utterance), 100);
 };
 
 // Generar nueva pregunta
