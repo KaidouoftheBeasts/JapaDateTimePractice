@@ -100,8 +100,8 @@ const loadVoices = () => {
     }
 };
 
-// Reproducir fecha/hora en japonés
-const speakJapaneseDateTime = () => {
+// Reproducir fecha/hora en japonés (ACTUALIZADO CON TTS PROPIO)
+const speakJapaneseDateTime = async () => {
     if (!currentMode) return;
     
     const currentDateTime = new Date();
@@ -114,33 +114,60 @@ const speakJapaneseDateTime = () => {
     loadingSpinner.style.display = 'block';
     buttonText.textContent = 'Hablando...';
     
-    speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(japaneseDateTime.speechText);
-    utterance.lang = 'ja-JP';
-    utterance.rate = 0.8;
-    
-    if (voicesLoaded) {
-        const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
-        if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
-            utterance.voice = japaneseVoices[selectedIndex];
+    try {
+        // Usar el servidor TTS personalizado
+        const response = await fetch('/api/tts/speak', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                text: japaneseDateTime.speechText
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error en el servidor TTS');
+        }
+        
+        const data = await response.json();
+        
+        // Reproducir audio
+        const audio = new Audio(data.audio_url);
+        audio.play();
+        
+        audio.onended = () => {
+            button.disabled = false;
+            loadingSpinner.style.display = 'none';
+            buttonText.textContent = 'Decir en japonés';
+        };
+        
+        audio.onerror = () => {
+            button.disabled = false;
+            loadingSpinner.style.display = 'none';
+            buttonText.textContent = 'Decir en japonés';
+        };
+        
+    } catch (error) {
+        console.error('Error TTS:', error);
+        button.disabled = false;
+        loadingSpinner.style.display = 'none';
+        buttonText.textContent = 'Decir en japonés';
+        
+        // Fallback a Web Speech API si está disponible
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(japaneseDateTime.speechText);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+            
+            utterance.onend = () => {
+                button.disabled = false;
+                loadingSpinner.style.display = 'none';
+                buttonText.textContent = 'Decir en japonés';
+            };
         }
     }
-    
-    utterance.onend = () => {
-        button.disabled = false;
-        loadingSpinner.style.display = 'none';
-        buttonText.textContent = voicesLoaded ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
-    };
-    
-    utterance.onerror = (event) => {
-        console.error('Error en speech synthesis:', event);
-        button.disabled = false;
-        loadingSpinner.style.display = 'none';
-        buttonText.textContent = voicesLoaded ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
-    };
-    
-    setTimeout(() => speechSynthesis.speak(utterance), 100);
 };
 
 // Inicialización
