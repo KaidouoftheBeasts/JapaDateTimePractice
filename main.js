@@ -138,8 +138,18 @@ const showMobileFallback = (japaneseDateTime) => {
 };
 
 // Función mejorada de síntesis de voz para Android
-const speakJapaneseDateTime = async () => {
+const speakJapaneseDateTime = () => {
     if (!currentMode) return;
+    
+    // En Android, necesitamos asegurar que hay interacción del usuario
+    if (isMobile) {
+        // Crear un evento táctil para asegurar la interacción
+        const button = document.getElementById('speakButton');
+        button.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            button.style.transform = '';
+        }, 150);
+    }
     
     const currentDateTime = new Date();
     const japaneseDateTime = formatJapaneseDateTime(currentDateTime, currentMode);
@@ -149,25 +159,69 @@ const speakJapaneseDateTime = async () => {
     
     button.disabled = true;
     loadingSpinner.style.display = 'block';
-    buttonText.textContent = 'Generando audio...';
+    buttonText.textContent = 'Hablando...';
     
-    try {
-        await window.ttsClient.speak(japaneseDateTime.speechText, {
-            voice: 'japanese',
-            speed: 160,
-            pitch: 50
-        });
-        buttonText.textContent = 'Audio completado ✓';
-    } catch (error) {
-        console.error('Error al generar audio:', error);
-        buttonText.textContent = 'Error en audio ❌';
-    } finally {
-        setTimeout(() => {
+    // Cancelar cualquier speech previo
+    speechSynthesis.cancel();
+    
+    // Pequeño delay para Android
+    setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(japaneseDateTime.speechText);
+        utterance.lang = 'ja-JP';
+        utterance.rate = isMobile ? 0.9 : 0.8; // Velocidad ligeramente mayor en móvil
+        
+        // Configuración específica para Android
+        if (isMobile) {
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+        }
+        
+        if (voicesLoaded && japaneseVoices.length > 0) {
+            const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
+            if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
+                utterance.voice = japaneseVoices[selectedIndex];
+            }
+        } else {
+            // En Android, usar la voz por defecto si no hay voces japonesas
+            utterance.lang = 'ja-JP';
+        }
+        
+        utterance.onend = () => {
             button.disabled = false;
             loadingSpinner.style.display = 'none';
-            buttonText.textContent = 'Decir en japonés';
-        }, 1000);
-    }
+            buttonText.textContent = voicesLoaded && japaneseVoices.length > 0 ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
+            
+            // Eliminar fallback si existe
+            const fallback = document.getElementById('voiceFallback');
+            if (fallback) fallback.remove();
+        };
+        
+        utterance.onerror = (event) => {
+            console.error('Error en speech synthesis:', event);
+            button.disabled = false;
+            loadingSpinner.style.display = 'none';
+            buttonText.textContent = voicesLoaded && japaneseVoices.length > 0 ? 'Decir en japonés' : 'Decir en japonés (voz por defecto)';
+            
+            // Fallback para Android: mostrar texto alternativo
+            if (isMobile) {
+                showMobileFallback(japaneseDateTime);
+            }
+        };
+        
+        // Intentar hablar
+        try {
+            speechSynthesis.speak(utterance);
+        } catch (error) {
+            console.error('Error al iniciar speech:', error);
+            button.disabled = false;
+            loadingSpinner.style.display = 'none';
+            buttonText.textContent = 'Error al hablar';
+            
+            if (isMobile) {
+                showMobileFallback(japaneseDateTime);
+            }
+        }
+    }, isMobile ? 100 : 0); // Delay ligeramente mayor en móvil
 };
 
 // Función mejorada para inicializar voces
