@@ -238,8 +238,8 @@ const loadVoices = () => {
     }
 };
 
-// Reproducir la hora en japonés (ACTUALIZADO CON TTS PROPIO)
-const speakJapaneseTime = async () => {
+// Reproducir la hora en japonés
+const speakJapaneseTime = () => {
     if (!currentJapaneseTime) return;
     
     const button = document.getElementById('speakButton');
@@ -250,75 +250,33 @@ const speakJapaneseTime = async () => {
     loadingSpinner.style.display = 'block';
     buttonText.textContent = 'Reproduciendo...';
     
-    try {
-        // Usar el servidor TTS personalizado
-        const response = await fetch('/api/tts/speak', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                text: currentJapaneseTime.speechText
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Error en el servidor TTS');
+    speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(currentJapaneseTime.speechText);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.8;
+    
+    if (voicesLoaded) {
+        const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
+        if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
+            utterance.voice = japaneseVoices[selectedIndex];
         }
-        
-        const data = await response.json();
-        
-        // Reproducir audio
-        const audio = new Audio(data.audio_url);
-        audio.play();
-        
-        audio.onended = () => {
-            button.disabled = false;
-            loadingSpinner.style.display = 'none';
-            buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-        };
-        
-        audio.onerror = () => {
-            button.disabled = false;
-            loadingSpinner.style.display = 'none';
-            buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-        };
-        
-    } catch (error) {
-        console.error('Error TTS:', error);
+    }
+    
+    utterance.onend = () => {
         button.disabled = false;
         loadingSpinner.style.display = 'none';
         buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-        
-        // Fallback a Web Speech API si está disponible
-        if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(currentJapaneseTime.speechText);
-            utterance.lang = 'ja-JP';
-            utterance.rate = 0.8;
-            
-            if (voicesLoaded) {
-                const selectedIndex = parseInt(document.getElementById('voiceSelect').value);
-                if (selectedIndex >= 0 && japaneseVoices[selectedIndex]) {
-                    utterance.voice = japaneseVoices[selectedIndex];
-                }
-            }
-            
-            utterance.onend = () => {
-                button.disabled = false;
-                loadingSpinner.style.display = 'none';
-                buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-            };
-            
-            utterance.onerror = (event) => {
-                console.error('Error en speech synthesis:', event);
-                button.disabled = false;
-                loadingSpinner.style.display = 'none';
-                buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
-            };
-            
-            setTimeout(() => speechSynthesis.speak(utterance), 100);
-        }
-    }
+    };
+    
+    utterance.onerror = (event) => {
+        console.error('Error en speech synthesis:', event);
+        button.disabled = false;
+        loadingSpinner.style.display = 'none';
+        buttonText.textContent = voicesLoaded ? 'Escuchar pronunciación' : 'Escuchar pronunciación (voz por defecto)';
+    };
+    
+    setTimeout(() => speechSynthesis.speak(utterance), 100);
 };
 
 // Generar nueva pregunta
